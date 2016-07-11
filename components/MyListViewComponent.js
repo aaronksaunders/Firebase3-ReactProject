@@ -1,4 +1,3 @@
-'use strict';
 
 import React, { Component } from 'react';
 import styles from '../styles';
@@ -10,10 +9,18 @@ import {
     ListView,
     View,
     TouchableOpacity,
+    PixelRatio,
+    Image,
     TouchableHighlight,
     Navigator
 } from 'react-native';
+
 import NavigationBar from 'react-native-navbar';
+
+import ImagePicker from 'react-native-image-picker';
+
+var Blob = require('blob-polyfill')
+var BlobBuilder = require('blob-polyfill')
 
 class ListDetailPage extends Component {
     constructor(props) {
@@ -94,7 +101,48 @@ class MyListViewComponent extends Component {
     }
 
     render() {
+        const leftButtonConfig = {
+            title: 'Photo',
 
+            handler2: () => {
+                var _time = new Date().getTime()
+                var fileRef = firebase.storage().ref('images/sample-text')
+                var uploadTask = fileRef.put(new File(['this is a small amount of data'], 'sample-text.txt', { type: "text/plain" }), { type: "text/plain" });
+
+                uploadTask.on('state_changed', function (snapshot) {
+                    console.log('state_changed', snapshot);
+                }, function (error) {
+                    console.log("error", JSON.stringify(error));
+                }, function () {
+                    // Handle successful uploads on complete
+                    // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+                    var downloadURL = uploadTask.snapshot.downloadURL;
+                })
+            },
+            handler: () => {
+                ImagePicker.launchImageLibrary({}, (response) => {
+                    console.log(response)
+                    console.log("uploading blob")
+                    var imgBlob = null;
+
+                    imgBlob = new window.Blob([response.data], { type: 'image/jpeg' });
+                    imgBlob.name = 'sample.jpg';
+
+                    var fileRef = firebase.storage().ref('images/sample')
+                    var uploadTask = fileRef.put(imgBlob, { type: "image/jpeg" });
+
+                    uploadTask.on('state_changed', function (snapshot) {
+                        console.log('state_changed', snapshot);
+                    }, function (error) {
+                        console.log("error", JSON.stringify(error));
+                    }, function () {
+                        // Handle successful uploads on complete
+                        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+                        var downloadURL = uploadTask.snapshot.downloadURL;
+                    })
+                });
+            }
+        }
         const rightButtonConfig = {
             title: 'Back',
             handler: () => {
@@ -109,6 +157,7 @@ class MyListViewComponent extends Component {
             <View style={styles.list_container}  >
                 <NavigationBar
                     title={titleConfig}
+                    leftButton={leftButtonConfig}
                     rightButton={rightButtonConfig} />
                 <ListView
                     dataSource={this.state.dataSource}
