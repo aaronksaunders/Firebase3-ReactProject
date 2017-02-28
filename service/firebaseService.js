@@ -20,23 +20,23 @@ class FirebaseService {
     /**
      * 
      * 
-     * @param {any} _path
-     * @param {any} _file
+     * @param {String} _path
+     * @param {any} _blob
      * @returns
      */
-    doFirebaseUploadStuff(_path, _file) {
+    doFirebaseUploadStuff(_path, _blob) {
 
         return new Promise((resolve, reject) => {
             var uploadTask = firebase.storage().ref(_path)
-                .put(_file, { contentType: 'image/jpeg' })
+                .put(_blob, { contentType: 'image/jpeg' })
 
-            uploadTask.on('state_changed', function (snapshot) {
+            uploadTask.on('state_changed', (snapshot) => {
                 var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 console.log('Upload is ' + progress + '% done');
-            }, function (error) {
+            }, (error) => {
                 // Handle unsuccessful uploads
                 reject(error)
-            }, function () {
+            }, () => {
                 // Handle successful uploads on complete
                 resolve(uploadTask.snapshot)
             });
@@ -54,11 +54,18 @@ class FirebaseService {
         var forCleanUp = null
 
         return new Promise((resolve, reject) => {
-            Blob.build('RNFetchBlob-' + uri, { type: 'image/jpeg' })
+
+            // create the blob for firebase
+            let path = uri.replace('file://', '');
+
+            // we are wrapping the path so that RNFetchBlob know where to find
+            // the data, see RNFetchBlob documentation for more information
+            Blob.build(RNFetchBlob.wrap(path), { type: 'image/jpeg' })
                 .then((blob) => {
                     forCleanUp = blob;
-
                     console.log("got blob...")
+
+                    // now that we have a blob, upload it to firebase
                     return this.doFirebaseUploadStuff('images/' + fileName, blob)
                 }).then((snap) => {
                     forCleanUp.close()
