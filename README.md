@@ -1,5 +1,7 @@
 # React Native Firebase File Upload
 
+## IOS ONLY NOW... STILL WORKING ON ANDROID
+
 ### Plugins Used
 
 - [https://github.com/wkh237/react-native-fetch-blob](https://github.com/wkh237/react-native-fetch-blob)
