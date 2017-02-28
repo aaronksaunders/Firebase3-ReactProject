@@ -1,5 +1,5 @@
 /**
- * Sample React Native App
+ * Sample React Native App for File upload
  * https://github.com/facebook/react-native
  * @flow
  */
@@ -10,131 +10,88 @@ import {
   StyleSheet,
   Text,
   View,
-  Navigator,
-  TouchableHighlight
+  TouchableHighlight,
+  Alert
 } from 'react-native';
 
-import LoginComponent from './components/LoginComponent'
-import MyListViewComponent from './components/MyListViewComponent'
+import ImagePicker from 'react-native-image-picker'
 
+import FirebaseService from './service/firebaseService'
 
-const firebase = require("firebase");
+export default class RNFirebaseUploadApp extends Component {
 
-// Initialize Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyBb0yc3UWwQPy_dvkcRLThNfQZuNx9jZ-g",
-  authDomain: "fir-starterapp.firebaseapp.com",
-  databaseURL: "https://fir-starterapp.firebaseio.com",
-  storageBucket: "fir-starterapp.appspot.com",
-};
-const firebaseApp = firebase.initializeApp(firebaseConfig);
+  _doShowAlert(_title = "RNFirebaseUploadApp", _message) {
 
+    // Works on both iOS and Android
+    Alert.alert(_title, _message,
+      [
+        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      ],
+      { cancelable: false }
+    )
 
-const routes = [
-  { title: 'LoginComponent', component: LoginComponent, index: 0 },
-  { title: 'MyListViewComponent', component: MyListViewComponent, index: 1 },
-];
-
-
-
-class FBReactProject extends Component {
-
-  constructor(props) {
-    super(props);
-
-    console.log("constructor run...");
-
-    this.state = {
-      loggedIn: false,
-      items: []
-    };
 
   }
 
-  componentDidMount() {
+  _doPressAction() {
+    const options = {
+      title: 'Select Image',
+      noData: true,
+      quality: .8,
+      maxWidth: 2000,
+      maxHeight: 2000,
+      storageOptions: {
+        skipBackup: true,
+        path: 'images'
+      }
+    }
 
-    console.log("componentDidMount run...");
-    var that = this
+    ImagePicker.showImagePicker(options, (response) => {
+      //console.log('Response = ', response);
 
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        // User is signed in.
-        that.setState({ loggedIn: true });
-        console.log("got user..", that.state.loggedIn);
-
-        that.refs.navigator.push(routes[1])
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
       } else {
-        // No user is signed in.
-        console.log("no user..");
-        that.setState({ loggedIn: false });
+        this.setState({ image: { uri: response.uri }, data: response })
 
-        that.refs.navigator.popToTop(0)
+        FirebaseService.uploadFile(response).then((_resp) => {
+          console.log("file uploaded successfully", _resp);
+          this._doShowAlert("RNFirebaseUploadApp - Upload Success", _resp.downloadURL)
+        }, (_error) => {
+          console.log("Error Uploading File", _error);
+          this._doShowAlert("RNFirebaseUploadApp - Upload Error", JSON.stringify(_error, null, 2))
+        }).catch((_error) => {
+          console.log("Error Uploading File", _error);
+        })
       }
     });
-
   }
 
-
-
-
-  /**
-   * login in the user with the credentials
-   */
-  _doPressAction() {
-
-    var that = this;
-    firebase.auth().signOut().then(function () {
-      // Sign-out successful.
-      // User is signed in.
-      that.setState({
-        loggedIn: false,
-        items: []
-      });
-    }, function (error) {
-      // An error happened.
-    });
-  }
 
   render() {
-
     return (
-      <Navigator ref = 'navigator'
-        style={{
-          flex: 1
-        }}
-        initialRoute={routes[0]}
-        initialRouteStack={routes}
-        configureScene = {() => {
-          return Navigator.SceneConfigs.FloatFromRight;
-        } }
-        renderScene = {(route, navigator) => {
-          return <route.component route={route}
-            navigator={navigator} />;
-        } }
-        />
-    )
-    // return (
-    //   <View style={styles.container}>
-    //     <Text style={styles.welcome}>
-    //       Welcome to React Native!
-    //     </Text>
-    //     <Text style={styles.instructions}>
-    //       To get started, edit index.ios.js
-    //     </Text>
-    //     <View>
-    //       <TouchableHighlight
-    //         style={styles.button}
-    //         underlayColor='#99d9f4'
-    //         onPress={() => { this._doPressAction() } }>
-    //         <Text style={styles.buttonText}>
-    //           LOGOUT
-    //         </Text>
-    //       </TouchableHighlight>
-    //     </View>
-    //   </View>
-    // );
+      <View style={styles.container}>
+        <Text style={styles.welcome}>
+          Welcome to React Native - Firebase File Upload Example
+        </Text>
+        <Text style={[styles.welcome, { fontSize: 16 }]}>
+          Uploading file using RNFetchBlob
+        </Text>
+        <View>
+          <TouchableHighlight
+            style={styles.button}
+            underlayColor='#99d9f4'
+            onPress={() => { this._doPressAction() }}>
+            <Text style={styles.buttonText}>
+              GET PHOTO
+            </Text>
+          </TouchableHighlight>
+        </View>
+      </View>
+    );
   }
-
 }
 
 const styles = StyleSheet.create({
@@ -149,11 +106,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     margin: 10,
   },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
 
   buttonText: {
     fontSize: 12,
@@ -163,17 +115,14 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 10,
     height: 32,
-    width: 60,
-    flex: 1,
-    flexDirection: 'row',
+    width: 120,
     backgroundColor: '#48BBEC',
     borderColor: '#48BBEC',
     borderWidth: 1,
     borderRadius: 2,
     marginBottom: 10,
-    alignSelf: 'stretch',
     justifyContent: 'center'
   }
 });
 
-AppRegistry.registerComponent('FBReactProject', () => FBReactProject);
+AppRegistry.registerComponent('RNFirebaseUploadApp', () => RNFirebaseUploadApp);

@@ -1,13 +1,28 @@
-# Firebase3-ReactProject
-Firebase 3 React-Native Project 
+# React Native Firebase File Upload
 
-Inspired by - https://github.com/davideast/firebase-react-native-sample
+### Plugins Used
 
-- Added authentication
-- Verified IOS & Android
+- [https://github.com/wkh237/react-native-fetch-blob](https://github.com/wkh237/react-native-fetch-blob)
+- [https://github.com/marcshilling/react-native-image-picker](https://github.com/marcshilling/react-native-image-picker)
 
-### Issue with File Storage
+### Set Keys in `Info.plist`
+```xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>For testing only</string>
+<key>NSCameraUsageDescription</key>
+<string>For testing only</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>For testing only</string>
+```
 
-There appears to be a problem somewhere in Firebase or how react-native is handling the uploading of files because storage is not working. Please see this issue for additional information
-
-https://github.com/facebook/react-native/issues/8684
+### Set Firebase Configuration in  `service/FirebaseService.js`
+```javascript
+// Initialize Firebase
+const firebaseConfig = {
+    apiKey: "YOUR-VALUES-HERE",
+    authDomain: "YOUR-VALUES-HERE.firebaseapp.com",
+    databaseURL: "https://YOUR-VALUES-HERE.firebaseio.com",
+    storageBucket: "YOUR-VALUES-HERE.appspot.com",
+    messagingSenderId: "YOUR-VALUES-HERE"
+};
+```
