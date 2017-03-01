@@ -1,50 +1,50 @@
 # React Native Firebase File Upload
 
-## IOS ONLY NOW... STILL WORKING ON ANDROID
 
 ### Still investigating
 On IOS when using the `NFetchBlob.wrap(PATH_TO_THE_FILE)` call, is was prepending `RNFetchBlob-file://` to the file path I get from IOS and that path already starts with `file://` This requrires me to account for it before calling wrap
 
 ```javascript
-  uploadFile({ uri, fileName }) {
+uploadFile({ uri, fileName }) {
 
-        var forCleanUp = null
+    var forCleanUp = null
 
-        return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
-            // create the blob for firebase
-            let path = uri.replace('file://', '');
+        // create the blob for firebase
+        let path = uri.replace('file://', '');
 
-            // we are wrapping the path so that RNFetchBlob know where to find
-            // the data, see RNFetchBlob documentation for more information
-            Blob.build(RNFetchBlob.wrap(path), { type: 'image/jpeg' })
-                .then((blob) => {
-                    forCleanUp = blob;
-                    console.log("got blob...")
+        // we are wrapping the path so that RNFetchBlob know where to find
+        // the data, see RNFetchBlob documentation for more information
+        Blob.build(RNFetchBlob.wrap(path), { type: 'image/jpeg' })
+            .then((blob) => {
+                forCleanUp = blob;
+                console.log("got blob...")
 
-                    // now that we have a blob, upload it to firebase
-                    return this.doFirebaseUploadStuff('images/' + fileName, blob)
-                }).then((snap) => {
-                    forCleanUp.close()
-                    console.log("file uploaded...")
-                    resolve(snap)
-                }, (err) => {
-                    console.log('err', err)
-                    forCleanUp && forCleanUp.close()
-                    reject(err)
-                }).catch((err) => {
-                    console.log('catch', err)
-                    forCleanUp && forCleanUp.close()
-                    reject(err)
-                })
-        })
+                // now that we have a blob, upload it to firebase
+                return this.doFirebaseUploadStuff('images/' + fileName, blob)
+            }).then((snap) => {
+                forCleanUp.close()
+                console.log("file uploaded...")
+                resolve(snap)
+            }, (err) => {
+                console.log('err', err)
+                forCleanUp && forCleanUp.close()
+                reject(err)
+            }).catch((err) => {
+                console.log('catch', err)
+                forCleanUp && forCleanUp.close()
+                reject(err)
+            })
+    })
+})
 ```
 ### Plugins Used
 
 - [https://github.com/wkh237/react-native-fetch-blob](https://github.com/wkh237/react-native-fetch-blob)
 - [https://github.com/marcshilling/react-native-image-picker](https://github.com/marcshilling/react-native-image-picker)
 
-### Set Keys in `Info.plist`
+### On IOS Set Keys in `Info.plist`
 ```xml
 <key>NSPhotoLibraryUsageDescription</key>
 <string>For testing only</string>
@@ -52,6 +52,17 @@ On IOS when using the `NFetchBlob.wrap(PATH_TO_THE_FILE)` call, is was prependin
 <string>For testing only</string>
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>For testing only</string>
+```
+
+### On Android, update `AndroidManifest.xml`
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> 
+<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera" android:required="false"/>
+<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 ```
 
 ### Set Firebase Configuration in  `service/FirebaseService.js`
